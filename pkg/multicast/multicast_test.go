@@ -48,7 +48,7 @@ func TestNewConsumer(t *testing.T) {
 	var receivedData []byte
 	var mu sync.Mutex
 
-	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, payload []byte) {
+	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 		mu.Lock()
 		receivedData = append(receivedData, payload...)
 		mu.Unlock()
@@ -99,7 +99,7 @@ func TestListenerAddConsumer(t *testing.T) {
 	var receivedData []byte
 	var mu sync.Mutex
 
-	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, payload []byte) {
+	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 		mu.Lock()
 		receivedData = append(receivedData, payload...)
 		mu.Unlock()
@@ -156,7 +156,7 @@ func TestListenerMultipleConsumers(t *testing.T) {
 	var count1, count2 int
 	var mu sync.Mutex
 
-	consumer1, err = listener.AddConsumer(addr1, func(ifi *net.Interface, payload []byte) {
+	consumer1, err = listener.AddConsumer(addr1, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 		mu.Lock()
 		count1++
 		mu.Unlock()
@@ -167,7 +167,7 @@ func TestListenerMultipleConsumers(t *testing.T) {
 		return
 	}
 
-	consumer2, err = listener.AddConsumer(addr2, func(ifi *net.Interface, payload []byte) {
+	consumer2, err = listener.AddConsumer(addr2, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 		mu.Lock()
 		count2++
 		mu.Unlock()
@@ -211,7 +211,7 @@ func TestListenerRemoveConsumer(t *testing.T) {
 		t.Fatalf("failed to resolve UDP address: %v", err)
 	}
 
-	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, payload []byte) {
+	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 		// No-op callback
 	})
 
@@ -251,8 +251,8 @@ func TestListenerClose(t *testing.T) {
 	addr1, _ := net.ResolveUDPAddr("udp", "224.1.1.5:12349")
 	addr2, _ := net.ResolveUDPAddr("udp", "224.1.1.6:12350")
 
-	consumer1, err1 := listener.AddConsumer(addr1, func(ifi *net.Interface, payload []byte) {})
-	consumer2, err2 := listener.AddConsumer(addr2, func(ifi *net.Interface, payload []byte) {})
+	consumer1, err1 := listener.AddConsumer(addr1, func(ifi *net.Interface, _ net.Addr, payload []byte) {})
+	consumer2, err2 := listener.AddConsumer(addr2, func(ifi *net.Interface, _ net.Addr, payload []byte) {})
 
 	// If we can't add consumers due to system limitations, skip the rest
 	if err1 != nil || err2 != nil {
@@ -294,7 +294,7 @@ func TestConsumerInvalidAddress(t *testing.T) {
 		t.Fatalf("failed to resolve UDP address: %v", err)
 	}
 
-	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, payload []byte) {})
+	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, _ net.Addr, payload []byte) {})
 
 	if err == nil {
 		t.Fatal("expected error for non-multicast address")
@@ -319,7 +319,7 @@ func TestConsumerCloseIdempotent(t *testing.T) {
 		t.Fatalf("failed to resolve UDP address: %v", err)
 	}
 
-	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, payload []byte) {})
+	consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, _ net.Addr, payload []byte) {})
 	if err != nil {
 		t.Logf("failed to create consumer (expected on some systems): %v", err)
 		return
@@ -351,7 +351,7 @@ func BenchmarkListenerAddConsumer(b *testing.B) {
 			b.Fatalf("failed to resolve UDP address: %v", err)
 		}
 
-		consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, payload []byte) {
+		consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, _ net.Addr, payload []byte) {
 			// No-op callback
 		})
 		if err != nil {
@@ -379,7 +379,7 @@ func BenchmarkConsumerCreation(b *testing.B) {
 			b.Fatalf("failed to resolve UDP address: %v", err)
 		}
 
-		consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, payload []byte) {})
+		consumer, err := NewConsumer(addr, []*net.Interface{loopback}, func(ifi *net.Interface, _ net.Addr, payload []byte) {})
 		if err != nil {
 			b.Logf("failed to create consumer (expected on some systems): %v", err)
 			return

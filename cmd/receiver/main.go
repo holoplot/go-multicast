@@ -92,8 +92,8 @@ func main() {
 	defer listener.Close()
 
 	// Create consumer with callback
-	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, payload []byte) {
-		slog.Info("packet received", "interface", ifi.Name, "length", len(payload))
+	consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, src net.Addr, payload []byte) {
+		slog.Info("packet received", "interface", ifi.Name, "src", src, "length", len(payload))
 		fmt.Printf("%s", hex.Dump(payload))
 	})
 	if err != nil {

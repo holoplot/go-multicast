@@ -15,7 +15,7 @@ const (
 	maxMTU = 1500
 )
 
-type ConsumerPacketCallback func(ifi *net.Interface, payload []byte)
+type ConsumerPacketCallback func(ifi *net.Interface, src net.Addr, payload []byte)
 
 type Consumer struct {
 	addr            *net.UDPAddr
@@ -126,7 +126,7 @@ func (c *Consumer) readLoop(pc *ipv4.PacketConn, ifi *net.Interface) {
 		}
 		c.mutex.Unlock()
 
-		n, cm, _, err := pc.ReadFrom(buf)
+		n, cm, src, err := pc.ReadFrom(buf)
 		if err != nil {
 			if errors.Is(err, net.ErrClosed) {
 				return
@@ -141,7 +141,7 @@ func (c *Consumer) readLoop(pc *ipv4.PacketConn, ifi *net.Interface) {
 			payload := make([]byte, n)
 			copy(payload, buf[:n])
 
-			c.cb(ifi, payload)
+			c.cb(ifi, src, payload)
 		}
 	}
 }
