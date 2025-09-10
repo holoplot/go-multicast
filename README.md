@@ -102,7 +102,6 @@ echo "Hello multicast" | socat - UDP-DATAGRAM:224.1.1.1:12345,broadcast
 ## Requirements
 
 - Go 1.19 or later
-- Linux (uses Linux-specific socket options for interface binding)
 
 ## License
 
