@@ -59,8 +59,8 @@ func main() {
     }
 
     // Add consumer
-    consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, payload []byte) {
-        fmt.Printf("Received on %s: %s\n", ifi.Name, string(payload))
+    consumer, err := listener.AddConsumer(addr, func(ifi *net.Interface, src net.Addr, payload []byte) {
+        fmt.Printf("Received on %s from %s: %s\n", ifi.Name, src.String(), string(payload))
     })
     if err != nil {
         log.Fatal(err)
