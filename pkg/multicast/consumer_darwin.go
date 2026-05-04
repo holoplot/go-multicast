@@ -1,4 +1,4 @@
-//go:build !linux && !darwin
+//go:build darwin
 
 package multicast
 
@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"golang.org/x/net/ipv4"
+	"golang.org/x/sys/unix"
 )
 
 func (c *Consumer) openPacketConn(ifi *net.Interface) (*ipv4.PacketConn, error) {
@@ -21,6 +22,20 @@ func (c *Consumer) openPacketConn(ifi *net.Interface) (*ipv4.PacketConn, error) 
 		_ = syscall.Close(s)
 
 		return nil, fmt.Errorf("failed to set SO_REUSEADDR: %w", err)
+	}
+
+	// Required on BSD/Darwin so multiple per-interface sockets can share the same multicast addr:port.
+	if err := syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEPORT, 1); err != nil {
+		_ = syscall.Close(s)
+
+		return nil, fmt.Errorf("failed to set SO_REUSEPORT: %w", err)
+	}
+
+	// Darwin equivalent of Linux's SO_BINDTODEVICE: restrict the socket to a single interface by index.
+	if err := syscall.SetsockoptInt(s, syscall.IPPROTO_IP, unix.IP_BOUND_IF, ifi.Index); err != nil {
+		_ = syscall.Close(s)
+
+		return nil, fmt.Errorf("failed to set IP_BOUND_IF: %w", err)
 	}
 
 	lsa := syscall.SockaddrInet4{Port: c.addr.Port}
